@@ -16,7 +16,7 @@ dotenv.config({})
 // middlewares
 app.use(express.json())
 app.use(cookieParser());
-app.use(cors({ credentials: true, origin: true }))
+app.use(cors({ credentials: true, origin: 'https://shahnawaz12.netlify.app' }))
 
 // routes
 app.post('/api/login', async (req, res) => {
@@ -43,7 +43,7 @@ app.post('/api/login', async (req, res) => {
 
     } catch (error) {
         // console.log(error)
-        return res.status(500).json({ error, err: "Internal Server Error" })
+        return res.status(500).json({ error: error.message, err: "Internal Server Error" })
     }
 })
 
@@ -67,24 +67,13 @@ app.post('/api/signup', async (req, res) => {
 
     } catch (error) {
         // console.log(error);
-        return res.status(500).json({ error, err: "Internal Server Error" })
+        return res.status(500).json({ error: error.message, err: "Internal Server Error" })
     }
 })
 
 app.post('/api/save/password', userVerification, async (req, res) => {
     try {
         let { websiteName, userName, password } = req.body;
-
-        let hashUserName = '';
-        let hashPassword = '';
-
-        for (let i = 0; i < userName.length; i++) {
-            hashUserName += (userName.charCodeAt(i) / 0.43710342 * 59.602).toString() + '-'
-        }
-
-        for (let i = 0; i < password.length; i++) {
-            hashPassword += (password.charCodeAt(i) / 0.43710342 * 59.602).toString() + '-'
-        }
 
         const isdataExist = await DataCollection.findOne({ userId: req.user._id })
         if (isdataExist) {
@@ -98,14 +87,14 @@ app.post('/api/save/password', userVerification, async (req, res) => {
             // console.log(hashUserName, hashPassword);
             await DataCollection.findOneAndUpdate({ userId: req.user._id }, {
                 '$push': {
-                    "websites": { websiteName, userName: hashUserName, password: hashPassword }
+                    "websites": { websiteName, userName, password }
                 }
             })
 
             return res.status(200).json({ message: "Password Save Successfully" })
 
         } else {
-            const newData = new DataCollection({ userId: req.user._id, websites: { websiteName, userName: hashUserName, password: hashPassword } })
+            const newData = new DataCollection({ userId: req.user._id, websites: { websiteName, userName, password } })
             await newData.save()
 
             return res.status(200).json({ message: "Password Save Successfully" })
@@ -113,7 +102,7 @@ app.post('/api/save/password', userVerification, async (req, res) => {
 
     } catch (error) {
         // console.log(error);
-        return res.status(500).json({ error, err: "Internal Server Error" })
+        return res.status(500).json({ error: error.message, err: "Internal Server Error" })
     }
 })
 
@@ -136,11 +125,36 @@ app.post('/api/get/password', userVerification, async (req, res) => {
 
     } catch (error) {
         // console.log(error);
-        return res.status(500).json({ error, err: "Internal Server Error" })
+        return res.status(500).json({ error: error.message, err: "Internal Server Error" })
     }
 })
 
+app.post('/api/delete/website', userVerification, async (req, res) => {
+    try {
+        const isUserExist = await DataCollection.findOne({ userId: req.user._id })
+        if (!isUserExist) {
+            return res.status(404).json({ err: "No Data Available" })
+        }
 
+        for (let data of isUserExist.websites) {
+            if (data.websiteName === req.body.webName) {
+
+                await DataCollection.findOneAndUpdate({ userId: req.user._id }, {
+                    $pull: {
+                        websites: { websiteName: req.body.webName }
+                    }
+                })
+
+                return res.status(200).json({ message: "Information Deleted Successfully" })
+            }
+        }
+
+        return res.status(404).json({ err: "No Data Available" })
+
+    } catch (error) {
+        return res.status(500).json({ error: error.message, err: "Internal Server Error" })
+    }
+})
 
 const port = process.env.PORT || 9000
 
