@@ -31,10 +31,17 @@ app.post('/api/login', async (req, res) => {
 
         const OTP = Math.ceil(1000 + Math.random() * 786)
 
-        const otp = new OtpCollection({ userId: isUserExist._id, otp: OTP })
-        await otp.save()
+        const isOtpExist = await OtpCollection.findOne({ userId: isUserExist._id })
+        if (isOtpExist) {
+            isOtpExist.otp = OTP
+            await isOtpExist.save()
 
-        res.status(200).json({ message: "Otp send Successfully", _id: isUserExist._id })
+        } else {
+            const otp = new OtpCollection({ userId: isUserExist._id, otp: OTP })
+            await otp.save()
+        }
+
+        res.status(200).json({ message: "OTP has been sent to your email", _id: isUserExist._id })
 
         transporter.sendMail({
             from: "Password Saver frowebformail@gmail.com",
@@ -74,6 +81,33 @@ app.post('/api/otp/verfication', async (req, res) => {
 
     } catch (error) {
         // console.log(error);
+        return res.status(500).json({ error: error.message, err: "Internal Server Error" })
+    }
+})
+
+app.post('/api/reset/otp', async (req, res) => {
+    try {
+        const isOtpExist = await OtpCollection.findOne({ userId: req.body.id }).populate("userId")
+        if (!isOtpExist) {
+            return res.status(404).json({ err: "Please Login/Signup First" })
+        }
+
+        const OTP = Math.ceil(1000 + Math.random() * 786)
+
+        isOtpExist.otp = OTP
+        await isOtpExist.save()
+
+        res.status(200).json({ message: "OTP has been sent to your email" })
+
+        transporter.sendMail({
+            from: "Password Saver frowebformail@gmail.com",
+            to: isOtpExist.userId.email,
+            subject: "Verification OTP",
+            html: `<b>This is your otp for login to Password Saver App : ${OTP}</b> <br /><br />Only Valid to 10m`,
+        });
+
+    } catch (error) {
+        console.log(error);
         return res.status(500).json({ error: error.message, err: "Internal Server Error" })
     }
 })
