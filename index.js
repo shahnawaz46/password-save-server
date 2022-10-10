@@ -17,7 +17,7 @@ dotenv.config({})
 // middlewares
 app.use(express.json())
 app.use(cookieParser());
-app.use(cors({ credentials: true, origin: 'https://shahnawaz12.netlify.app' }))
+app.use(cors({ credentials: true, origin: 'https://manage-password.netlify.app' }))
 // app.use(cors({ credentials: true, origin: true }))
 
 // routes
