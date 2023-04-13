@@ -178,8 +178,9 @@ app.post('/api/save/password', userVerification, async (req, res) => {
     }
 })
 
-app.post('/api/get/password', userVerification, async (req, res) => {
+app.get('/api/get/password/:slug', userVerification, async (req, res) => {
     try {
+        const {slug} = req.params
         const isdataExist = await DataCollection.findOne({ userId: req.user._id })
         if (!isdataExist) {
             return res.status(404).json({ err: "No Data Available" })
@@ -187,7 +188,7 @@ app.post('/api/get/password', userVerification, async (req, res) => {
 
         if (isdataExist) {
             for (let data of isdataExist.websites) {
-                if (data.websiteName == req.body.webName) {
+                if (data.websiteName == slug) {
                     return res.status(200).json({ userName: data.userName, websiteName: data.websiteName, password: data.password })
                 }
             }
@@ -201,7 +202,7 @@ app.post('/api/get/password', userVerification, async (req, res) => {
     }
 })
 
-app.post('/api/delete/website', userVerification, async (req, res) => {
+app.delete('/api/delete/website', userVerification, async (req, res) => {
     try {
         const isUserExist = await DataCollection.findOne({ userId: req.user._id })
         if (!isUserExist) {
